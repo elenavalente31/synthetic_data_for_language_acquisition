@@ -1,17 +1,19 @@
-from groq import Groq
 from dotenv import load_dotenv
 import os
 import csv
 import pandas as pd
 import xml.etree.ElementTree as ET
-import time 
-import ast
 from groq import Groq
 import random
 from trova_esempi import *
 from trova_lunghezze import *
 
-load_dotenv()   # carica le variabili del file .env
+## In questo file viene generato il dataset secondo la prima modalità di generazione. Il criterio su cui si itera, dunque, sono i set che contengono i testi generati in un determinato periodo.
+##Per esempio, tutti i testi autentici generati nel periodo "2_5" sono contenuti in un set, da cui si attinge per impiegare quei testi come esempi da inserire nel prompt.
+
+
+
+load_dotenv()   # carica le variabili del file .env, ovvero le variabili che contengono le API keys.
 
 print(os.environ.get("Groq_API"))
 
@@ -19,10 +21,9 @@ client = Groq(
     api_key=os.environ.get("Groq_API")
 )
 
-LUNGHEZZA_TARGET= trova_lunghezze(lunghezze)
-MAX_TOKENS= LUNGHEZZA_TARGET + 30
-
-esempi_1 = trova_esempi(set2_4)
+#la funzione trova_esempi restituisce due esempi per iterazione, 
+#selezionandoli dai set in cui sono stati divisi tutti i testi esempio
+esempi_1 = trova_esempi(set2_4) 
 
 #genero il set di id
 
@@ -39,22 +40,24 @@ if os.path.exists(set_file):
 
 
 
-
+#inizio iterazione. Solitamente con una chiamata API non si riuscivano a produrre più di 30 testi.
 for i in range(30):
 
     with open ("coppie_usate.txt", "r", encoding= "utf-8") as file:
         coppie_usate= ast.literal_eval(file.read())
         
-
+    LUNGHEZZA_TARGET= trova_lunghezze(lunghezze) #la funzione trova_lunghezza restituisce una lunghezza pescata randomicamente da quelle dei testi autentici
+    MAX_TOKENS= LUNGHEZZA_TARGET + 30 #si è aggiunto un numero di token "cuscinetto" 
 
     esempi= random.sample(esempi_1, 2)
     esempio_1= esempi[0]
     esempio_2 = esempi[1]
 
 
-    coppia=(esempio_1,esempio_2)
+    coppia=(esempio_1,esempio_2) 
 
-    
+    # coppie_usate è semplicemente un file .txt in cui venivano conservate tutte le coppie che erano state impiegate come esempio, 
+    #di modo che la stessa coppia non venisse guardata due volte 
     while coppia in coppie_usate:
 
         
@@ -117,7 +120,7 @@ for i in range(30):
     dati_generati= tronca_testo(testi_generati, MAX_TOKENS)
 
 
-
+    #assegnazione di un ID per ciascun testo generato, assicurandosi di non ripetere gli ID già usati
     
     doc_id= random.randint(1000,6000)
     while doc_id in set_id:
@@ -129,7 +132,7 @@ for i in range(30):
         f.write(f"{doc_id}\n")
 
     
-
+    #definizione e scrittura del file .xml
 
     xml_path= "synthetic_data\\dataset_t1.2.xml"
 
@@ -150,7 +153,7 @@ for i in range(30):
 
     tsv_path= "synthetic_data\\essay.tsv\\essay2_4.tsv"
 
-
+    #definizione e scrittura del file .tsv
     if not os.path.exists(tsv_path):
         with open (tsv_path, "w", encoding = "utf-8") as outfile:
 
@@ -163,8 +166,6 @@ for i in range(30):
     with open (tsv_path, "a", encoding = "utf-8") as outfile:
         outfile.write(f"{doc_id}\t2_4\n")
 
-    #minuti = 60
-    #time.sleep(minuti * 1)
 
 
 
