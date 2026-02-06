@@ -1,4 +1,4 @@
-#definizione funzione trova_esempi ---> trovo gli esempi degli essay scritti nel primo anno
+#definizione funzione trova_esempi ---> trovo gli esempi degli essay scritti nel primo anno (e nel secondo anno)
 import pandas as pd
 import xml.etree.ElementTree as ET
 
@@ -167,4 +167,5 @@ def trova_esempi(set_id, file= "data\\LangLearn_Training_Data\\Essays_CItA.xml")
     
 
     return(esempi)
+
 
