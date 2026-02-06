@@ -7,9 +7,11 @@ from trova_testo import *
 from dotenv import load_dotenv
 from groq import Groq
 
-# =========================
-# PATH FILE
-# =========================
+## definisco i percorsi dei file utilizzati. Secondo questa modalità di generazione, il dataset viene prodotto iterando su ogni singolo studente. 4
+##Per fare ciò, è stato creato un file .json in cui ad ogni studente corrisponde un dizionario, che contiene coppie chiave-valore. 
+##Ciascuna coppia chiave-valore è formata da ID dell'essay scritto dallo studente e periodo in cui quell'essay è stato scritto. 
+## Ad esempio, Studente_1: {"3456":"1_2"}
+##In questo modo si è cercato di replicare degli studenti artificiali. 
 
 xml_reale = "training_set_cita\\Essays_CItA.xml"
 xml_path = "dati_sintetici_train\\dataset_t1.5.xml"
@@ -18,9 +20,9 @@ set_file = "set_id.txt"
 
 os.makedirs("dati_sintetici_train", exist_ok=True)
 
-# =========================
-# CARICAMENTO INPUT
-# =========================
+
+# Carico i file di input
+
 
 with open("studenti_train.json", "r", encoding="utf-8") as f:
     studenti = json.load(f)
@@ -31,9 +33,7 @@ if os.path.exists(json_output):
 else:
     studenti_sintetici = {}
 
-# =========================
-# SET ID USATI
-# =========================
+# definisco il set degli ID da usare
 
 set_id = set()
 if os.path.exists(set_file):
@@ -42,9 +42,6 @@ if os.path.exists(set_file):
             if line.strip().isdigit():
                 set_id.add(int(line.strip()))
 
-# =========================
-# XML (UNA SOLA VOLTA)
-# =========================
 
 if os.path.exists(xml_path):
     tree = ET.parse(xml_path)
@@ -53,19 +50,14 @@ else:
     root = ET.Element("dataset")
     tree = ET.ElementTree(root)
 
-# =========================
-# API
-# =========================
 
 load_dotenv()
-client = Groq(api_key=os.environ.get("API_jaco"))
+client = Groq(api_key=os.environ.get("API_groq"))
 
-LUNGHEZZA_TARGET = trova_lunghezze(lunghezze)
-MAX_TOKENS = LUNGHEZZA_TARGET + 30
 
-# =========================
-# GENERAZIONE
-# =========================
+
+# ciclo di iterazione su ciascuno studente
+
 
 for studente, id_order_map in studenti.items():
 
@@ -78,6 +70,11 @@ for studente, id_order_map in studenti.items():
 
     for id_reale, order in id_order_map.items():
 
+        #utilizzo la funzione trova_lunghezze per definire la lunghezza che il testo generato deve avere
+        
+        LUNGHEZZA_TARGET = trova_lunghezze(lunghezze)
+        MAX_TOKENS = LUNGHEZZA_TARGET + 30
+        
         esempio = trova_testo(xml_reale, id_reale)
 
         prompt = (
@@ -103,6 +100,8 @@ for studente, id_order_map in studenti.items():
         testo = chat_completion.choices[0].message.content.strip()
         testo = tronca_testo(testo, MAX_TOKENS)
 
+        #definisco un ID per il testo generato, assicurandomi che non ne sia già presente uno uguale
+        
         doc_id = random.randint(1000, 6000)
         while doc_id in set_id:
             doc_id = random.randint(1000, 6000)
@@ -111,7 +110,7 @@ for studente, id_order_map in studenti.items():
         with open(set_file, "a", encoding="utf-8") as f:
             f.write(f"{doc_id}\n")
 
-        # XML
+        # definisco e scrivo il file .xml
 
         xml_path= "dati_sintetici_train\\dataset_t1.5.xml"
 
@@ -134,12 +133,11 @@ for studente, id_order_map in studenti.items():
         # JSON
         studenti_sintetici[studente][str(doc_id)] = order
 
-# =========================
-# SALVATAGGIO FINALE
-# =========================
+# salvo tutti i dati in un nuovo file .json
 
 
         with open(json_output, "w", encoding="utf-8") as f:
             json.dump(studenti_sintetici, f, indent=2, ensure_ascii=False)
 
         print("✅ Generazione completata correttamente")
+
