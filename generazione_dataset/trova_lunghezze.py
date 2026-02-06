@@ -13,8 +13,11 @@ lunghezze = [len("".join(elem.itertext()).strip().split()) for elem in root.find
 def trova_lunghezze(lunghezze):
     if not lunghezze:
         raise ValueError("Non ci sono più lunghezze disponibili!")
+    
     # Seleziona una lunghezza casuale
+    
     scelta = random.choice(lunghezze)
+    
     # Rimuovila dalla lista per non riutilizzarla
     lunghezze.remove(scelta)
     
@@ -23,9 +26,9 @@ def trova_lunghezze(lunghezze):
 
 
 def tronca_testo(testo, max_tokens):
-    """
-    Tronca il testo fino all'ultimo punto prima di max_tokens token.
-    """
+
+    #Tronca il testo fino all'ultimo punto prima di max_tokens token.
+    
     tokens = testo.split()
     
     # Limitiamo al numero massimo di token
@@ -41,3 +44,4 @@ def tronca_testo(testo, max_tokens):
     else:
         # Se non ci sono punteggiature, torniamo tutto il testo limitato
         return testo_limitato
+
